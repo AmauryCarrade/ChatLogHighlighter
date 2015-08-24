@@ -4,13 +4,18 @@ import unittest
 import highlighter
 
 
-class DatesRemovalTestCase(unittest.TestCase):
+class DatesDetectionTestCase(unittest.TestCase):
 	def test_dates_removed(self):
 		log = """
 		[08:19:06] <Jenjeur> Un message
-		08:19:06 <Amaury> Un messageeee
-		[08:19] <Jenjeur> Un messageeeeeeee
-		08:19 <Amaury> Un messageeeeeee
+		08:19:06 <Amaury> Un message
+		[08:19] <Jenjeur> Un message
+		08:19 <Amaury> Un message
+		[01-04-2016 08:18:27] <Jenjeur> Un message
+		[01/04/2016 08:18:27] <Jenjeur> Un message
+		[1/4/16 08:18:27] <Jenjeur> Un message
+		[2016-04-01T08:18:27] <Jenjeur> Un message
+		[01.4.16 08:18:27] <Jenjeur> Un message
 		"""
 		highlighted = highlighter.highlight(log, remove_dates=True)
 
@@ -19,6 +24,11 @@ class DatesRemovalTestCase(unittest.TestCase):
 
 			self.assertFalse("08:19" in line)
 			self.assertFalse("08:19:06" in line)
+			self.assertFalse("01-04-2016" in line)
+			self.assertFalse("01/04/2016" in line)
+			self.assertFalse("1/4/16" in line)
+			self.assertFalse("2016-04-01T" in line)
+			self.assertFalse("01.4.16" in line)
 
 	def test_dates_highlighted(self):
 		log = """
