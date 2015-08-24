@@ -3,13 +3,13 @@ __author__ = 'amaury'
 import re, random
 
 def highlight(raw_log: str,
-              remove_dates = True,
-              remove_bots = [],
-              colors = [],
+              remove_dates=True,
+              remove_bots=[],
+              colors=[],
               actions_italic=True,
               dates_color: str="gray",
-              line_separator = "\n",
-              output_format = "html"):
+              line_separator: str=None,
+              output_format="html"):
 	"""
 	Highlights a chat log.
 
@@ -21,6 +21,7 @@ def highlight(raw_log: str,
 	               colors will be used.
 	:param actions_italic: If True, the action messages (/me) will be displayed italicized.
 	:param line_separator: The separator to use between lines (for the generated output).
+	                       If None, deduced from the output format.
 	:param output_format: The output_format type to produce. Supported: "html", "bbcode".
 	:return: The highlighted version of the log.
 	"""
@@ -32,6 +33,10 @@ def highlight(raw_log: str,
 
 	if output_format not in ["html", "bbcode"]:
 		output_format = "html"
+
+	if line_separator is None:
+		if   output_format == "html":   line_separator = "<br />\n"
+		elif output_format == "bbcode": line_separator = "\n"
 
 
 	input_lines = raw_log.strip().split("\n")
@@ -149,7 +154,7 @@ def _italic(text, output_format):
 	"""
 
 	if output_format == "html":
-		return '<span style="text-style: italic;">' + text + '</span>'
+		return '<span style="font-style: italic;">' + text + '</span>'
 	elif output_format == "bbcode":
 		return '[i]' + text + '[/i]'
 	else:
