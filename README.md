@@ -45,7 +45,7 @@ print(highlighter.highlight(log, output_format="bbcode"))
 [i]* [color=lime]nmp3bot[/color] dances :D|-<[/i]
 [i]* [color=lime]nmp3bot[/color] dances :D/-<[/i]
 [i]* [color=blue]phxl|paper[/color] dances :D\-<[/i]
-<[color=gray][HB][/color][color=purple]HatfulOfHollow[/color]> i'm going to become rich and famous after i invent a device that allows you to stab people in the face over the internet
+<[color=purple][HB]HatfulOfHollow[/color]> i'm going to become rich and famous after i invent a device that allows you to stab people in the face over the internet
 """
 ```
 
