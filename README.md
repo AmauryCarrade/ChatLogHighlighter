@@ -16,7 +16,7 @@ I wrote this tool to do that automatically. With unit tests because why not?
 ### Example
 
 ```python
-import highlighter
+from chat_highlighter import ChatHighlighter
 
 # Chat log from http://bash.org/?4281 (a bit modified to serve the demo)
 log = """
@@ -32,7 +32,8 @@ log = """
 <[HB]HatfulOfHollow> i'm going to become rich and famous after i invent a device that allows you to stab people in the face over the internet
 """
 
-print(highlighter.highlight(log, output_format="bbcode"))
+h = ChatHighlighter(output_format = "bbcode")
+print(h.highlight(log))
 
 # Output
 """
@@ -49,7 +50,7 @@ print(highlighter.highlight(log, output_format="bbcode"))
 """
 ```
 
-See options directly inside the `highlighter.py` file (documented there).
+See options directly inside the `chat_highlighter.py` file (documented there).
 
 ### Licence
 
