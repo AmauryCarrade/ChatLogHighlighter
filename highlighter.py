@@ -1,6 +1,7 @@
-__author__ = 'amaury'
+__author__ = 'Amaury Carrade'
 
 import re, random, html
+
 
 def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, actions_italic=True,
               dates_color: str="gray", line_separator: str=None, nick_prefixes=None, nick_prefixes_color="gray",
@@ -8,23 +9,40 @@ def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, ac
 	"""
 	Highlights a chat log.
 
-	:param raw_log: The raw chat log
-	:param remove_dates: If True, the date prefixes will be removed.
-	:param remove_bots: If non-empty, the nicknames of bots to remove, if a bot transmits the
-						chat of some persons. The messages of the bots will be traited as normal
-						messages.
-	:param colors: The colors to use to highlight the pseudonyms. If not specified, a default set
-	               of colors will be used.
-	:param actions_italic: If True, the action messages (/me) will be displayed italicized.
-	:param line_separator: The separator to use between lines (for the generated output).
-	                       If None, deduced from the output format.
-	:param nick_prefixes: A list of the nick prefixes, ignored when the nicks are compared and
-	                      differently colored, like the operators' “@” or the voiced “+”.
-	                      If None, a default set is used with usual IRC prefixes (~, &, @, % and +).
-	:param nick_prefixes_color: The color of the nick prefixes. Set to None to color them the
-	                            same way as the nickname.
-	:param output_format: The output_format type to produce. Supported: "html", "bbcode".
-	:return: The highlighted version of the log.
+	:param raw_log:
+		The raw chat log.
+
+	:param remove_dates:
+		If True, the date prefixes will be removed.
+
+	:param remove_bots:
+		If non-empty, the nicknames of bots to remove, if a bot transmits the chat of some persons.
+		The messages of the bots will be parsed as normal messages.
+
+	:param colors:
+		The colors to use to highlight the pseudonyms. If not specified, a default set of colors
+		will be used.
+
+	:param actions_italic:
+		If True, the action messages (/me) will be displayed italicized.
+
+	:param line_separator:
+		The separator to use between lines (for the generated output).
+	    If None, deduced from the output format.
+
+	:param nick_prefixes:
+		A list of the nick prefixes, ignored when the nicks are compared and differently colored,
+		like the operators' “@” or the voiced “+”.
+	    If None, a default set is used with usual IRC prefixes (~, &, @, % and +).
+
+	:param nick_prefixes_color:
+		The color of the nick prefixes. Set to None to color them the same way as the nicknames.
+
+	:param output_format:
+		The output format type to produce. Supported: "html", "bbcode".
+
+	:return:
+		The highlighted version of the log.
 	"""
 
 	nicknames_colors = {}
@@ -197,6 +215,10 @@ def _italic(text, output_format):
 		return text
 
 def _escape(text, output_format):
+	"""
+	Escapes the HTML entities of the given text, if the output type is HTML.
+	"""
+
 	if output_format == "html":
 		return html.escape(text)
 	else:

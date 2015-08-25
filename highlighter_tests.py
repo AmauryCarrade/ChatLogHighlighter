@@ -1,4 +1,4 @@
-__author__ = 'amaury'
+__author__ = 'Amaury Carrade'
 
 import unittest
 import highlighter
