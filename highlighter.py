@@ -2,224 +2,258 @@ __author__ = 'Amaury Carrade'
 
 import re, random, html
 
+class Highlighter:
 
-def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, actions_italic=True,
-              dates_color: str="gray", line_separator: str=None, nick_prefixes=None, nick_prefixes_color="gray",
-              output_format="html"):
-	"""
-	Highlights a chat log.
+	def __init__(self, remove_dates=True, remove_bots=None, colors=None, actions_italic=True,
+	              dates_color: str="gray", lines_separator: str=None, nick_prefixes=None, nick_prefixes_color="gray",
+	              output_format="html"):
+		"""
+		Initializes a new chat log highlighter.
 
-	:param raw_log:
-		The raw chat log.
+		:param remove_dates:
+			If True, the date prefixes will be removed.
 
-	:param remove_dates:
-		If True, the date prefixes will be removed.
+		:param remove_bots:
+			If non-empty, the nicknames of bots to remove, if a bot transmits the chat of some persons.
+			The messages of the bots will be parsed as normal messages.
 
-	:param remove_bots:
-		If non-empty, the nicknames of bots to remove, if a bot transmits the chat of some persons.
-		The messages of the bots will be parsed as normal messages.
+		:param colors:
+			The colors to use to highlight the pseudonyms. If not specified, a default set of colors
+			will be used. Use HTML colors here.
 
-	:param colors:
-		The colors to use to highlight the pseudonyms. If not specified, a default set of colors
-		will be used.
+		:param actions_italic:
+			If True, the action messages (/me) will be displayed italicized.
 
-	:param actions_italic:
-		If True, the action messages (/me) will be displayed italicized.
+		:param dates_color:
+			The color to use to highlight the dates. Use HTML colors here.
 
-	:param line_separator:
-		The separator to use between lines (for the generated output).
-	    If None, deduced from the output format.
+		:param lines_separator:
+			The separator to use between lines (for the generated output).
+		    If None, deduced from the output format.
 
-	:param nick_prefixes:
-		A list of the nick prefixes, ignored when the nicks are compared and differently colored,
-		like the operators' “@” or the voiced “+”.
-	    If None, a default set is used with usual IRC prefixes (~, &, @, % and +).
+		:param nick_prefixes:
+			A list of the nick prefixes, ignored when the nicks are compared and differently colored,
+			like the operators' “@” or the voiced “+”.
+		    If None, a default set is used with usual IRC prefixes (~, &, @, % and +).
 
-	:param nick_prefixes_color:
-		The color of the nick prefixes. Set to None to color them the same way as the nicknames.
+		:param nick_prefixes_color:
+			The color of the nick prefixes. Set to None to color them the same way as the nicknames.
+			Use HTML colors here.
 
-	:param output_format:
-		The output format type to produce. Supported: "html", "bbcode".
+		:param output_format:
+			The output format type to produce. Supported: "html", "bbcode".
+		"""
 
-	:return:
-		The highlighted version of the log.
-	"""
+		if not colors or len(colors) == 0:
+			colors = ["orange", "green", "lime", "red", "purple", "blue", "yellow"]
 
-	nicknames_colors = {}
-	used_colors = []
+		if output_format not in ["html", "bbcode"]:
+			output_format = "html"
 
-	if not colors or len(colors) == 0:
-		colors = ["orange", "green", "lime", "red", "purple", "blue", "yellow"]
+		if lines_separator is None:
+			if   output_format == "html":   lines_separator = "<br />\n"
+			elif output_format == "bbcode": lines_separator = "\n"
 
-	if output_format not in ["html", "bbcode"]:
-		output_format = "html"
+		if not remove_bots:
+			remove_bots = []
 
-	if line_separator is None:
-		if   output_format == "html":   line_separator = "<br />\n"
-		elif output_format == "bbcode": line_separator = "\n"
-
-	if not remove_bots:
-		remove_bots = []
-
-	if not nick_prefixes:
-		nick_prefixes = ["~", "&", "@", "%", "+"]
+		if not nick_prefixes:
+			nick_prefixes = ["~", "&", "@", "%", "+"]
 
 
-	input_lines = raw_log.strip().split("\n")
-	output = ""
+		self.remove_dates = remove_dates
+		self.remove_bots = remove_bots
 
-	regexp_date = re.compile(r"^(\[?([0-9]{1,4}(/|-|\\|\.| )[0-9]{1,2}((/|-|\\|\.| )[0-9]{1,4})( |T)?)?[0-9]{1,2}:[0-9]{1,2}(:[0-9]{1,2})?\]?) ", re.IGNORECASE)
-	regexp_nick_message = re.compile(r"^(<|\()([^>)]+)(>|\))", re.IGNORECASE)
-	regexp_nick_action  = re.compile(r"^(\*+) ?(\S+)", re.IGNORECASE)
+		self.colors = colors
+		self.actions_italic = actions_italic
+		self.dates_color = dates_color
 
-	rand = random.Random()
+		self.lines_separator = lines_separator
 
+		self.nick_prefixes = nick_prefixes
+		self.nick_prefixes_color = nick_prefixes_color
 
-	for line in input_lines:
-		line = line.strip()
-		no_date_line = regexp_date.sub("", line, 1).strip()
-
-		nick = None
-		nick_prefix_char = "<"
-		nick_suffix_char = ">"
-
-		is_action = False
-		action_prefix_char = "*"
-
-		date = ""
-		message = ""
+		self.output_format = output_format
 
 
-		# Date extraction
+		self._regexp_date = re.compile(r"^(\[?([0-9]{1,4}(/|-|\\|\.| )[0-9]{1,2}((/|-|\\|\.| )[0-9]{1,4})( |T)?)?[0-9]{1,2}:[0-9]{1,2}(:[0-9]{1,2})?\]?) ", re.IGNORECASE)
+		self._regexp_nick_message = re.compile(r"^(<|\()([^>)]+)(>|\))", re.IGNORECASE)
+		self._regexp_nick_action  = re.compile(r"^(\*+) ?(\S+)", re.IGNORECASE)
 
-		date_match = regexp_date.match(line)
-		if date_match:
-			date = date_match.group(1)
+		self._rand = random.Random()
 
-		# Nick + message type (message/action) extraction
 
-		nick_match = regexp_nick_message.match(no_date_line)
-		if nick_match:
-			nick = nick_match.group(2).strip()
-			nick_prefix_char = nick_match.group(1)
-			nick_suffix_char = nick_match.group(3)
-			message = regexp_nick_message.sub("", no_date_line, 1)
+	def highlight(self, raw_log: str):
+		"""
+		Highlights a chat log.
 
-			if nick in remove_bots:
-				nick = None
-				no_date_line = regexp_nick_message.sub("", no_date_line, 1).strip()
-				nick_match = regexp_nick_message.match(no_date_line)
-				if nick_match:
-					nick = nick_match.group(2).strip()
-					nick_prefix_char = nick_match.group(1)
-					nick_suffix_char = nick_match.group(3)
-					message = regexp_nick_message.sub("", no_date_line, 1)
+		:param raw_log:
+			The raw chat log.
 
-		if nick is None:
-			# Action message maybe?
-			nick_match = regexp_nick_action.match(no_date_line)
+		:return:
+			The highlighted version of the log.
+		"""
+
+		nicknames_colors = {}
+		used_colors = []
+
+		# The colors are copied because this set will be modified to remove used
+		# colors, avoiding duplicates.
+		base_colors = self.colors.copy()
+
+		input_lines = raw_log.strip().split("\n")
+		output = ""
+
+
+		for line in input_lines:
+			line = line.strip()
+			no_date_line = self._regexp_date.sub("", line, 1).strip()
+
+			nick = None
+			nick_prefix_char = "<"
+			nick_suffix_char = ">"
+
+			is_action = False
+			action_prefix_char = "*"
+
+			date = ""
+			message = ""
+
+
+			# Date extraction
+
+			date_match = self._regexp_date.match(line)
+			if date_match:
+				date = date_match.group(1)
+
+
+			# Nick + message type (message/action) extraction
+
+			nick_match = self._regexp_nick_message.match(no_date_line)
 			if nick_match:
-				nick = nick_match.group(2)
-				action_prefix_char = nick_match.group(1)
-				message = regexp_nick_action.sub("", no_date_line, 1)
-				is_action = True
+				nick = nick_match.group(2).strip()
+				nick_prefix_char = nick_match.group(1)
+				nick_suffix_char = nick_match.group(3)
+				message = self._regexp_nick_message.sub("", no_date_line, 1)
 
-		if nick is None:
-			# Not a message. Raw addition, and next one.
-			if not remove_dates:
-				output += _colorize(date, dates_color, output_format) + " "
+				if nick in self.remove_bots:
+					nick = None
+					no_date_line = self._regexp_nick_message.sub("", no_date_line, 1).strip()
+					nick_match = self._regexp_nick_message.match(no_date_line)
+					if nick_match:
+						nick = nick_match.group(2).strip()
+						nick_prefix_char = nick_match.group(1)
+						nick_suffix_char = nick_match.group(3)
+						message = self._regexp_nick_message.sub("", no_date_line, 1)
 
-			output += no_date_line + line_separator
-			continue
+			if nick is None:
+				# Action message maybe?
+				nick_match = self._regexp_nick_action.match(no_date_line)
+				if nick_match:
+					nick = nick_match.group(2)
+					action_prefix_char = nick_match.group(1)
+					message = self._regexp_nick_action.sub("", no_date_line, 1)
+					is_action = True
 
-		# Nick prefixes extraction
-		nick_prefix = None
+			if nick is None:
+				# Not a message. Raw addition, and next one.
+				if not self.remove_dates:
+					output += self._colorize(date, self.dates_color) + " "
 
-		for prefix in nick_prefixes:
-			if nick.startswith(prefix):
-				nick_prefix = prefix
-				nick = nick.replace(nick_prefix, "", 1)
-
-
-		# Let's find a color for this nick
-
-		if nick in nicknames_colors:
-			nick_color = nicknames_colors[nick]
-
-		else:
-			if len(colors) == 0:
-				colors = used_colors
-				used_colors = []
-
-			nick_color = rand.choice(colors)
-			colors.remove(nick_color)
-			used_colors.append(nick_color)
-
-			nicknames_colors[nick] = nick_color
+				output += no_date_line + self.lines_separator
+				continue
 
 
-		# Assembly
+			# Nick prefixes extraction
 
-		if not remove_dates:
-			output += _colorize(date, dates_color, output_format) + " "
+			nick_prefix = None
 
-		colored_nick = ""
+			for prefix in self.nick_prefixes:
+				if nick.startswith(prefix):
+					nick_prefix = prefix
+					nick = nick.replace(nick_prefix, "", 1)
 
-		if nick_prefix:
-			if nick_prefixes_color:
-				colored_nick = _colorize(nick_prefix, nick_prefixes_color, output_format)
+
+			# Let's find a color for this nick
+
+			if nick in nicknames_colors:
+				nick_color = nicknames_colors[nick]
+
 			else:
-				nick = nick_prefix + nick
+				if len(base_colors) == 0:
+					base_colors = used_colors
+					used_colors = []
 
-		colored_nick += _colorize(nick, nick_color, output_format)
+				nick_color = self._rand.choice(base_colors)
+				base_colors.remove(nick_color)
+				used_colors.append(nick_color)
 
-		if is_action:
-			action_text = _escape(action_prefix_char, output_format) + " " + colored_nick + _escape(message, output_format)
-			if actions_italic:
-				output += _italic(action_text, output_format)
+				nicknames_colors[nick] = nick_color
+
+
+			# Assembly
+
+			if not self.remove_dates:
+				output += self._colorize(date, self.dates_color) + " "
+
+			colored_nick = ""
+
+			if nick_prefix:
+				if self.nick_prefixes_color:
+					colored_nick = self._colorize(nick_prefix, self.nick_prefixes_color)
+				else:
+					nick = nick_prefix + nick
+
+			colored_nick += self._colorize(nick, nick_color)
+
+			if is_action:
+				action_text = self._escape(action_prefix_char) + " " + colored_nick + self._escape(message)
+				if self.actions_italic:
+					output += self._italic(action_text)
+				else:
+					output += action_text
+
 			else:
-				output += action_text
+				output += self._escape(nick_prefix_char) + colored_nick + self._escape(nick_suffix_char + message)
 
+			output += self.lines_separator
+
+		return output
+
+
+	def _colorize(self, text, color):
+		"""
+		Adds the color tags to the given text.
+		"""
+
+		if color is None or color == "":
+			return text
+
+		if self.output_format == "html":
+			return '<span style="color: ' + color + ';">' + text + '</span>'
+		elif self.output_format == "bbcode":
+			return "[color=" + color + "]" + text + "[/color]"
 		else:
-			output += _escape(nick_prefix_char, output_format) + colored_nick + _escape(nick_suffix_char + message, output_format)
+			return text
 
-		output += line_separator
+	def _italic(self, text):
+		"""
+		Puts the given text in italic.
+		"""
 
-	return output
+		if self.output_format == "html":
+			return '<span style="font-style: italic;">' + text + '</span>'
+		elif self.output_format == "bbcode":
+			return '[i]' + text + '[/i]'
+		else:
+			return text
 
-def _colorize(text, color, output_format):
-	"""
-	Adds the color tags to the given text.
-	"""
+	def _escape(self, text):
+		"""
+		Escapes the HTML entities of the given text, if the output type is HTML.
+		"""
 
-	if color is None or color == "":
-		return text
-
-	if output_format == "html":
-		return '<span style="color: ' + color + ';">' + text + '</span>'
-	elif output_format == "bbcode":
-		return "[color=" + color + "]" + text + "[/color]"
-	else:
-		return text
-
-def _italic(text, output_format):
-	"""
-	Puts the given text in italic.
-	"""
-
-	if output_format == "html":
-		return '<span style="font-style: italic;">' + text + '</span>'
-	elif output_format == "bbcode":
-		return '[i]' + text + '[/i]'
-	else:
-		return text
-
-def _escape(text, output_format):
-	"""
-	Escapes the HTML entities of the given text, if the output type is HTML.
-	"""
-
-	if output_format == "html":
-		return html.escape(text)
-	else:
-		return text
+		if self.output_format == "html":
+			return html.escape(text)
+		else:
+			return text

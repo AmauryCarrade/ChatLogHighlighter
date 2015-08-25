@@ -4,6 +4,7 @@ import unittest
 import highlighter
 import re
 
+h = highlighter.Highlighter()
 
 class DatesDetectionTestCase(unittest.TestCase):
 	def test_dates_removed(self):
@@ -18,7 +19,8 @@ class DatesDetectionTestCase(unittest.TestCase):
 		[2016-04-01T08:18:27] <Jenjeur> Un message
 		[01.4.16 08:18:27] <Jenjeur> Un message
 		"""
-		highlighted = highlighter.highlight(log, remove_dates=True)
+		h.remove_dates = True
+		highlighted =h.highlight(log)
 
 		for line in highlighted.split("\n"):
 			if len(line) == 0: continue
@@ -38,7 +40,10 @@ class DatesDetectionTestCase(unittest.TestCase):
 		[08:19] <Jenjeur> Un messageeeeeeee
 		08:19 <Amaury> Un messageeeeeee
 		"""
-		highlighted = highlighter.highlight(log, remove_dates=False, dates_color="gray", output_format="html")
+		h.remove_dates = False
+		h.dates_color = "gray"
+		h.output_format = "html"
+		highlighted = h.highlight(log)
 
 		for line in highlighted.split("\n"):
 			if len(line) == 0: continue
@@ -57,7 +62,8 @@ class BotsRemovalTestCase(unittest.TestCase):
 		< Anna > <Amaury> Un message
 		<Anna > <Amaury> Un message
 		"""
-		highlighted = highlighter.highlight(log, remove_bots=["Anna"])
+		h.remove_bots = ["Anna"]
+		highlighted = h.highlight(log)
 
 		for line in highlighted.split("\n"):
 			if len(line) == 0: continue
@@ -75,7 +81,8 @@ class PrefixExtractorTestCase(unittest.TestCase):
 		<@Amaury> Un message
 		<@Amaury> Un message
 		"""
-		highlighted = highlighter.highlight(log, output_format="bbcode")
+		h.output_format = "bbcode"
+		highlighted = h.highlight(log)
 
 		for line in highlighted.split("\n"):
 			if len(line) == 0: continue
@@ -91,7 +98,8 @@ class PrefixExtractorTestCase(unittest.TestCase):
 		<@Amaury> Un message
 		<@Jenjeur> Un message
 		"""
-		highlighted = highlighter.highlight(log, output_format="bbcode", nick_prefixes_color=None)
+		h.nick_prefixes_color = None
+		highlighted = h.highlight(log)
 
 		nicks_colors = {}
 		regexp_nick = re.compile(r"^<\[color=([^\]])\]([^\[\]])", re.IGNORECASE)
