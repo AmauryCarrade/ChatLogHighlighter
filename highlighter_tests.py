@@ -2,6 +2,7 @@ __author__ = 'amaury'
 
 import unittest
 import highlighter
+import re
 
 
 class DatesDetectionTestCase(unittest.TestCase):
@@ -62,6 +63,51 @@ class BotsRemovalTestCase(unittest.TestCase):
 			if len(line) == 0: continue
 
 			self.assertFalse("Anna" in line, "Bot not removed from the log: '" + line + "'")
+
+
+class PrefixExtractorTestCase(unittest.TestCase):
+	def test_prefix_highlighted(self):
+		log = """
+		<@Jenjeur> Un message
+		<@Amaury> Un message
+		<@Jenjeur> Un toast
+		<@Amaury> Un message
+		<@Amaury> Un message
+		<@Amaury> Un message
+		"""
+		highlighted = highlighter.highlight(log, output_format="bbcode")
+
+		for line in highlighted.split("\n"):
+			if len(line) == 0: continue
+
+			self.assertTrue(line.strip().startswith('<[color=gray]@[/color][color='))
+
+	def test_prefixed_nicks_with_same_color(self):
+		log = """
+		<Jenjeur> Un message
+		<Amaury> Un message
+		<~Jenjeur> Un toast
+		<%Amaury> Un message
+		<@Amaury> Un message
+		<@Jenjeur> Un message
+		"""
+		highlighted = highlighter.highlight(log, output_format="bbcode", nick_prefixes_color=None)
+
+		nicks_colors = {}
+		regexp_nick = re.compile(r"^<\[color=([^\]])\]([^\[\]])", re.IGNORECASE)
+		for line in highlighted.split("\n"):
+			if len(line) == 0: continue
+
+			nick_and_color = regexp_nick.match(line)
+			if nick_and_color:
+				nick  = nick_and_color.group(2)
+				color = nick_and_color.group(1)
+
+				if nick not in nicks_colors:
+					nicks_colors[nick] = color
+				else:
+					self.assertTrue(nicks_colors[nick] == color, "Color not kept for nick " + nick + ": " + nicks_colors[nick] + " vs " + color)
+
 
 if __name__ == '__main__':
 	unittest.main()
