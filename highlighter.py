@@ -1,6 +1,6 @@
 __author__ = 'amaury'
 
-import re, random
+import re, random, html
 
 def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, actions_italic=True,
               dates_color: str="gray", line_separator: str=None, nick_prefixes=None, nick_prefixes_color="gray",
@@ -156,14 +156,14 @@ def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, ac
 		colored_nick += _colorize(nick, nick_color, output_format)
 
 		if is_action:
-			action_text = action_prefix_char + " " + colored_nick + message
+			action_text = _escape(action_prefix_char, output_format) + " " + colored_nick + _escape(message, output_format)
 			if actions_italic:
 				output += _italic(action_text, output_format)
 			else:
 				output += action_text
 
 		else:
-			output += nick_prefix_char + colored_nick + nick_suffix_char + message
+			output += _escape(nick_prefix_char, output_format) + colored_nick + _escape(nick_suffix_char + message, output_format)
 
 		output += line_separator
 
@@ -193,5 +193,11 @@ def _italic(text, output_format):
 		return '<span style="font-style: italic;">' + text + '</span>'
 	elif output_format == "bbcode":
 		return '[i]' + text + '[/i]'
+	else:
+		return text
+
+def _escape(text, output_format):
+	if output_format == "html":
+		return html.escape(text)
 	else:
 		return text
