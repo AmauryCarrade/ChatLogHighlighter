@@ -4,9 +4,9 @@ import re, random, html
 
 class ChatHighlighter:
 
-	def __init__(self, remove_dates=True, remove_bots=None, colors=None, actions_italic=True,
-	              dates_color: str="gray", lines_separator: str=None, nick_prefixes=None, nick_prefixes_color="gray",
-	              output_format="html"):
+	def __init__(self, remove_dates=True, remove_bots: set=None, colors: str=None, actions_italic=True,
+	              dates_color="gray", lines_separator: str=None, nick_prefixes: set=None,
+	              nick_prefixes_color="gray", output_format="html"):
 		"""
 		Initializes a new chat log highlighter.
 
@@ -42,6 +42,7 @@ class ChatHighlighter:
 
 		:param output_format:
 			The output format type to produce. Supported: "html", "bbcode".
+			Fallbacks to "html" if the given format is invalid.
 		"""
 
 		if not colors or len(colors) == 0:
@@ -221,7 +222,7 @@ class ChatHighlighter:
 		return output
 
 
-	def _colorize(self, text, color):
+	def _colorize(self, text: str, color: str):
 		"""
 		Adds the color tags to the given text.
 		"""
@@ -236,7 +237,7 @@ class ChatHighlighter:
 		else:
 			return text
 
-	def _italic(self, text):
+	def _italic(self, text: str):
 		"""
 		Puts the given text in italic.
 		"""
@@ -248,7 +249,7 @@ class ChatHighlighter:
 		else:
 			return text
 
-	def _escape(self, text):
+	def _escape(self, text: str):
 		"""
 		Escapes the HTML entities of the given text, if the output type is HTML.
 		"""
