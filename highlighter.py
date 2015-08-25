@@ -52,7 +52,7 @@ def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, ac
 
 	regexp_date = re.compile(r"^(\[?([0-9]{1,4}(/|-|\\|\.| )[0-9]{1,2}((/|-|\\|\.| )[0-9]{1,4})( |T)?)?[0-9]{1,2}:[0-9]{1,2}(:[0-9]{1,2})?\]?) ", re.IGNORECASE)
 	regexp_nick_message = re.compile(r"^(<|\()([^>)]+)(>|\))", re.IGNORECASE)
-	regexp_nick_action  = re.compile(r"^\*+ ?(\S+)", re.IGNORECASE)
+	regexp_nick_action  = re.compile(r"^(\*+) ?(\S+)", re.IGNORECASE)
 
 	rand = random.Random()
 
@@ -62,7 +62,12 @@ def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, ac
 		no_date_line = regexp_date.sub("", line, 1).strip()
 
 		nick = None
+		nick_prefix_char = "<"
+		nick_suffix_char = ">"
+
 		is_action = False
+		action_prefix_char = "*"
+
 		date = ""
 		message = ""
 
@@ -78,6 +83,8 @@ def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, ac
 		nick_match = regexp_nick_message.match(no_date_line)
 		if nick_match:
 			nick = nick_match.group(2).strip()
+			nick_prefix_char = nick_match.group(1)
+			nick_suffix_char = nick_match.group(3)
 			message = regexp_nick_message.sub("", no_date_line, 1)
 
 			if nick in remove_bots:
@@ -86,13 +93,16 @@ def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, ac
 				nick_match = regexp_nick_message.match(no_date_line)
 				if nick_match:
 					nick = nick_match.group(2).strip()
+					nick_prefix_char = nick_match.group(1)
+					nick_suffix_char = nick_match.group(3)
 					message = regexp_nick_message.sub("", no_date_line, 1)
 
 		if nick is None:
 			# Action message maybe?
 			nick_match = regexp_nick_action.match(no_date_line)
 			if nick_match:
-				nick = nick_match.group(1)
+				nick = nick_match.group(2)
+				action_prefix_char = nick_match.group(1)
 				message = regexp_nick_action.sub("", no_date_line, 1)
 				is_action = True
 
@@ -146,14 +156,14 @@ def highlight(raw_log: str, remove_dates=True, remove_bots=None, colors=None, ac
 		colored_nick += _colorize(nick, nick_color, output_format)
 
 		if is_action:
-			action_text = "* " + colored_nick + message
+			action_text = action_prefix_char + " " + colored_nick + message
 			if actions_italic:
 				output += _italic(action_text, output_format)
 			else:
 				output += action_text
 
 		else:
-			output += "<" + colored_nick + ">" + message
+			output += nick_prefix_char + colored_nick + nick_suffix_char + message
 
 		output += line_separator
 
