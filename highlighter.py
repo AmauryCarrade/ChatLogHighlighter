@@ -43,7 +43,7 @@ def highlight(raw_log: str,
 	output = ""
 
 	regexp_date = re.compile(r"^(\[?([0-9]{1,4}(/|-|\\|\.| )[0-9]{1,2}((/|-|\\|\.| )[0-9]{1,4})( |T)?)?[0-9]{1,2}:[0-9]{1,2}(:[0-9]{1,2})?\]?) ", re.IGNORECASE)
-	regexp_nick_message = re.compile(r"^(<|\()([^>\])]+)(>|\))", re.IGNORECASE)
+	regexp_nick_message = re.compile(r"^(<|\()([^>)]+)(>|\))", re.IGNORECASE)
 	regexp_nick_action  = re.compile(r"^\*+ ?(\S+)", re.IGNORECASE)
 
 	rand = random.Random()
