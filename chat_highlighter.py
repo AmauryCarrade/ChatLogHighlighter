@@ -2,7 +2,7 @@ __author__ = 'Amaury Carrade'
 
 import re, random, html
 
-class Highlighter:
+class ChatHighlighter:
 
 	def __init__(self, remove_dates=True, remove_bots=None, colors=None, actions_italic=True,
 	              dates_color: str="gray", lines_separator: str=None, nick_prefixes=None, nick_prefixes_color="gray",

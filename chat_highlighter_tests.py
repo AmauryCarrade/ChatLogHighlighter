@@ -1,10 +1,10 @@
 __author__ = 'Amaury Carrade'
 
 import unittest
-import highlighter
+import chat_highlighter
 import re
 
-h = highlighter.Highlighter()
+h = chat_highlighter.ChatHighlighter()
 
 class DatesDetectionTestCase(unittest.TestCase):
 	def test_dates_removed(self):
