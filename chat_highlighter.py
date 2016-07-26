@@ -4,7 +4,7 @@ import re, random, html
 
 class ChatHighlighter:
 
-	def __init__(self, remove_dates=True, remove_bots: set=None, colors: str=None, actions_italic=True,
+	def __init__(self, remove_dates=True, remove_bots: set=None, colors: set=None, actions_italic=True,
 	              dates_color="gray", lines_separator: str=None, nick_prefixes: set=None,
 	              nick_prefixes_color="gray", output_format="html"):
 		"""
@@ -46,7 +46,7 @@ class ChatHighlighter:
 		"""
 
 		if not colors or len(colors) == 0:
-			colors = ["orange", "green", "lime", "red", "purple", "blue", "yellow"]
+			colors = ["orange", "green", "lime", "red", "purple", "blue"]
 
 		if output_format not in ["html", "bbcode"]:
 			output_format = "html"
